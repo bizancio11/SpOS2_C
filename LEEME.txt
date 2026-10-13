@@ -1,0 +1,10 @@
+SpOS2 - 3 ediciones (ISO booteable: Linux minimo + tu escritorio SpOS2 en pygame)
+  N         -> --edition normal      : SpOS2 + Pygame (wifi en modo demostracion)
+  Programer -> --edition programmer  : + Python/IDLE/git/gcc/nasm/qemu y terminal al cerrar
+  Premium   -> --edition premium     : + wifi real (NetworkManager/nmcli), audio y mp3
+
+1) Copia TODO tu proyecto SpOS2 dentro de app/ (main.py ya esta). Faltan al menos:
+   core.py y logo.png (main.py importa core).
+2) Windows: doble clic en build_isos.bat (usa WSL). Linux: sudo ./build.sh
+3) qemu-system-x86_64 -m 2048 -cdrom SpOS2_N.iso
+En GitHub: sube todo y ejecuta el workflow "Build SpOS2 ISOs".
