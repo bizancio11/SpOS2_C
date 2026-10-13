@@ -1,0 +1,45 @@
+name: Build SpOS2 ISOs
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [N, Programer, Premium]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Localizar el proyecto (donde esta build.sh)
+        run: |
+          B=$(find . -name build.sh -not -path './.git/*' | head -1)
+          [ -n "$B" ] || { echo "No se encontro build.sh en el repo. Archivos:"; ls -R | head -50; exit 1; }
+          echo "PROJ=$(dirname "$B")" >> "$GITHUB_ENV"
+          echo "Proyecto en: $(dirname "$B")"
+
+      - name: Liberar espacio en disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android
+          df -h /
+
+      - name: Dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build debootstrap debian-archive-keyring xorriso squashfs-tools dos2unix
+
+      - name: Normalizar saltos de linea
+        working-directory: ${{ env.PROJ }}
+        run: find build.sh editions skel -type f -exec dos2unix -q {} +
+
+      - name: Construir ISO ${{ matrix.edition }}
+        working-directory: ${{ env.PROJ }}
+        run: sudo bash build.sh ${{ matrix.edition }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpOS2_${{ matrix.edition }}
+          path: ${{ env.PROJ }}/SpOS2_${{ matrix.edition }}.iso
+          compression-level: 0
+          retention-days: 14
