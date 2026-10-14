@@ -1,0 +1,40 @@
+name: Build SpOS2 ISOs
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # live-build de Ubuntu es viejo y no sabe armar Debian bookworm -> se usa un contenedor Debian
+    container:
+      image: debian:bookworm
+      options: --privileged
+    strategy:
+      fail-fast: false
+      matrix:
+        edition: [N, Programer, Premium]
+    steps:
+      - name: Dependencias
+        run: |
+          apt-get update
+          apt-get install -y git ca-certificates live-build debootstrap debian-archive-keyring xorriso squashfs-tools dos2unix
+
+      - uses: actions/checkout@v4
+
+      - name: Ver archivos del repo
+        run: |
+          find . -not -path './.git/*' -not -path './.git' | sort | head -80
+          [ -f build.sh ] || { echo "ERROR: falta build.sh en la RAIZ del repo (al lado de la carpeta app)."; exit 1; }
+          [ -d app ] || { echo "ERROR: falta la carpeta app/ en la raiz del repo."; exit 1; }
+
+      - name: Construir ISO ${{ matrix.edition }}
+        run: |
+          dos2unix -q build.sh
+          bash build.sh ${{ matrix.edition }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpOS2_${{ matrix.edition }}
+          path: SpOS2_${{ matrix.edition }}.iso
+          compression-level: 0
+          retention-days: 14
